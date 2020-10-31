@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:scanbot_sdk_example_flutter/ui/login.dart';
 import 'package:scanbot_sdk_example_flutter/ui/preview_document_widget.dart';
 import 'package:scanbot_sdk_example_flutter/ui/progress_dialog.dart';
 import 'package:flutter/material.dart';
@@ -107,7 +108,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: MainPageWidget(),
+      home: Login(),
       debugShowCheckedModeBanner: false,
     );
   }
