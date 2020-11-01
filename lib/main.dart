@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:provider/provider.dart';
 import 'package:scanbot_sdk_example_flutter/ui/login_page.dart';
 import 'package:scanbot_sdk_example_flutter/ui/preview_document_widget.dart';
 import 'package:scanbot_sdk_example_flutter/ui/progress_dialog.dart';
@@ -17,15 +19,23 @@ import 'package:scanbot_sdk/scanbot_sdk_models.dart';
 import 'package:scanbot_sdk/scanbot_sdk_ui.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 
+import 'AppLanguage.dart';
+import 'app_localizations.dart';
 import 'pages_repository.dart';
 import 'ui/utils.dart';
 import 'package:image_picker/image_picker.dart';
 import 'utils/constants.dart';
 import 'documents/fetch_documents.dart';
 
-void main() => runApp(MyApp());
+void main() async {
+  AppLanguage appLanguage = AppLanguage();
+  await appLanguage.fetchLocale();
+  runApp(MyApp(
+    appLanguage: appLanguage,
+  ));
+}
 
-const SCANBOT_SDK_LICENSE_KEY =   "OKrw3WYY6sSqn1988qBvNx7ysqB+2t" +
+const SCANBOT_SDK_LICENSE_KEY = "OKrw3WYY6sSqn1988qBvNx7ysqB+2t" +
     "gqE9dRCLQCp4rbHI3yQKIZhYvNzpcV" +
     "dottRDWpCqWfBeD2AoHqInqwMhGuUH" +
     "boGprarcbTIyZIeMOrNnzU0OoZoAFG" +
@@ -39,7 +49,6 @@ const SCANBOT_SDK_LICENSE_KEY =   "OKrw3WYY6sSqn1988qBvNx7ysqB+2t" +
     "iCeuY3ieFVMw==\nU2NhbmJvdFNESw" +
     "pjb20uZXhhbXBsZS5hYXNhYW4KMTYw" +
     "Njc4MDc5OQo1OTAKMw==\n";
-
 
 initScanbotSdk() async {
   // Consider adjusting this optional storageBaseDirectory - see the comments below.
@@ -94,6 +103,9 @@ Future<String> getDemoStorageBaseDirectory() async {
 }
 
 class MyApp extends StatefulWidget {
+  final AppLanguage appLanguage;
+  MyApp({this.appLanguage});
+
   @override
   _MyAppState createState() {
     initScanbotSdk();
@@ -109,9 +121,32 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: signIn(),
-      debugShowCheckedModeBanner: false,
+    return ChangeNotifierProvider(
+      builder: (_) => MyApp().appLanguage,
+      child: Consumer<AppLanguage>(builder: (context, model, child) {
+        return MaterialApp(
+          home: signIn(),
+          supportedLocales: [
+            const Locale('en', 'US'),
+            const Locale('ta', 'IN')
+          ],
+          localizationsDelegates: [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+          ],
+          localeResolutionCallback: (locale, supportedLocales) {
+            for (var supportedLocaleLanguage in supportedLocales) {
+              if (supportedLocaleLanguage.languageCode == locale.languageCode &&
+                  supportedLocaleLanguage.countryCode == locale.countryCode) {
+                return supportedLocaleLanguage;
+              }
+            }
+            return supportedLocales.first;
+          },
+          debugShowCheckedModeBanner: false,
+        );
+      }),
     );
   }
 
@@ -138,24 +173,23 @@ class _MainPageWidgetState extends State<MainPageWidget> {
 
   @override
   Widget build(BuildContext context) {
+    var appLanguage = Provider.of<AppLanguage>(context);
     return SafeArea(
       child: Scaffold(
           backgroundColor: kWhite,
           body: SlidingUpPanel(
             color: Colors.grey[200],
             minHeight: 150,
-            maxHeight: MediaQuery. of(context).size.height*0.65,
+            maxHeight: MediaQuery.of(context).size.height * 0.65,
             borderRadius: BorderRadius.circular(30),
-            onPanelClosed: (){
+            onPanelClosed: () {
               panelIcon = Icons.keyboard_arrow_up;
-              setState(() {
-              });
+              setState(() {});
             },
-            onPanelOpened: (){
+            onPanelOpened: () {
               panelIcon = Icons.keyboard_arrow_down;
-              setState(() {
-              });
-              },
+              setState(() {});
+            },
             panel: Column(
               mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -175,9 +209,11 @@ class _MainPageWidgetState extends State<MainPageWidget> {
                       shape: CircleBorder(),
                       child: RaisedButton(
                         elevation: 10,
-                        child: Icon(Icons.camera_alt,
-                        size: 45,
-                        color:  kPrimaryColor,),
+                        child: Icon(
+                          Icons.camera_alt,
+                          size: 45,
+                          color: kPrimaryColor,
+                        ),
                         onPressed: () => startDocumentScanning(),
                         color: Colors.white,
                       ),
@@ -191,7 +227,7 @@ class _MainPageWidgetState extends State<MainPageWidget> {
                         child: Icon(
                           Icons.filter,
                           size: 20,
-                          color:kPrimaryColor,
+                          color: kPrimaryColor,
                         ),
                         onPressed: () => importImage(),
                         color: kWhite,
@@ -205,12 +241,11 @@ class _MainPageWidgetState extends State<MainPageWidget> {
                 InkWell(
                   onTap: () => gotoImagesView(),
                   child: Container(
-                    width: MediaQuery. of(context).size.width * 0.9,
+                    width: MediaQuery.of(context).size.width * 0.9,
                     height: 50,
                     decoration: BoxDecoration(
-                      color: kPrimaryColor,
-                      borderRadius: BorderRadius.circular(10)
-                    ),
+                        color: kPrimaryColor,
+                        borderRadius: BorderRadius.circular(10)),
                     child: Center(
                       child: Text(
                         'VIEW RESULTS',
@@ -223,19 +258,19 @@ class _MainPageWidgetState extends State<MainPageWidget> {
                   height: 20,
                 ),
                 InkWell(
-                  onTap: () => startBarcodeScanner(),
+                  onTap: () {
+                    appLanguage.changeLanguage(Locale("en"));
+                  },
                   child: Container(
-                    width: MediaQuery. of(context).size.width * 0.9,
+                    width: MediaQuery.of(context).size.width * 0.9,
                     height: 50,
-                    decoration:BoxDecoration(
+                    decoration: BoxDecoration(
                         color: kPrimaryColor,
-                        borderRadius: BorderRadius.circular(10)
-                    ),
+                        borderRadius: BorderRadius.circular(10)),
                     child: Center(
                       child: Text(
-                          'BARCODE SCANNER',
+                        'ENGLISH',
                         style: TextStyle(color: kWhite, fontSize: 19),
-
                       ),
                     ),
                   ),
@@ -244,18 +279,19 @@ class _MainPageWidgetState extends State<MainPageWidget> {
                   height: 20,
                 ),
                 InkWell(
-                  onTap: () => startQRScanner(),
+                  onTap: () {
+                    appLanguage.changeLanguage(Locale("ta"));
+                  },
                   child: Container(
-                    width: MediaQuery. of(context).size.width * 0.9,
+                    width: MediaQuery.of(context).size.width * 0.9,
                     height: 50,
                     decoration: BoxDecoration(
                         color: kPrimaryColor,
-                        borderRadius: BorderRadius.circular(10)
-                    ),
+                        borderRadius: BorderRadius.circular(10)),
                     child: Center(
                       child: Text(
-                          'QR SCANNER',
-                          style: TextStyle(color: kWhite, fontSize: 19),
+                        'TAMIL',
+                        style: TextStyle(color: kWhite, fontSize: 19),
                       ),
                     ),
                   ),
@@ -266,12 +302,11 @@ class _MainPageWidgetState extends State<MainPageWidget> {
                 InkWell(
                   onTap: () => gotoDocumentsView(),
                   child: Container(
-                    width: MediaQuery. of(context).size.width * 0.9,
+                    width: MediaQuery.of(context).size.width * 0.9,
                     height: 50,
                     decoration: BoxDecoration(
                         color: kPrimaryColor,
-                        borderRadius: BorderRadius.circular(10)
-                    ),
+                        borderRadius: BorderRadius.circular(10)),
                     child: Center(
                       child: Text(
                         'All DOCUMENTS',
@@ -284,9 +319,11 @@ class _MainPageWidgetState extends State<MainPageWidget> {
             ),
             body: Column(
               children: [
-                SizedBox(height: 80,),
+                SizedBox(
+                  height: 80,
+                ),
                 Text(
-                  "AASAAN",
+                  AppLocalizations.of(context).translate('title'),
                   style: TextStyle(
                     fontSize: 36,
                     color: kPrimaryColor,
@@ -294,10 +331,12 @@ class _MainPageWidgetState extends State<MainPageWidget> {
                   ),
                 ),
                 Text(
-                  "Scan karo, Upload karo",
+                  AppLocalizations.of(context).translate('tag'),
                   textAlign: TextAlign.center,
                 ),
-                SizedBox(height: 80,),
+                SizedBox(
+                  height: 80,
+                ),
                 Image.asset(
                   'img/doc.png',
                   height: 300,
@@ -308,8 +347,7 @@ class _MainPageWidgetState extends State<MainPageWidget> {
                 ),
               ],
             ),
-          )
-      ),
+          )),
     );
   }
 
@@ -574,9 +612,10 @@ class _MainPageWidgetState extends State<MainPageWidget> {
     );
   }
 
-  gotoDocumentsView() async{
+  gotoDocumentsView() async {
     return await Navigator.of(context).push(
-      MaterialPageRoute(builder: (context) => FetchDocuments("Fetch Documents")),
+      MaterialPageRoute(
+          builder: (context) => FetchDocuments("Fetch Documents")),
     );
   }
 
